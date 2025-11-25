@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-FATE'S GAMBIT - Simulador Estatístico Puro
-Demonstra probabilidades com eventos aleatórios COMPLETOS
-Você não escolhe qual dado rolar - o sistema escolhe aleatoriamente!
-"""
-
 import pygame
 import sys
 from collections import defaultdict
@@ -15,14 +8,12 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 import numpy as np
 import random
 
-# Configurações
 SCREEN_WIDTH = 1400
 SCREEN_HEIGHT = 800
 GAME_WIDTH = 700
 STATS_WIDTH = 700
 FPS = 60
 
-# Cores
 COLOR_BG = (15, 5, 30)
 COLOR_PANEL = (50, 25, 75)
 COLOR_GOLD = (255, 215, 0)
@@ -136,7 +127,6 @@ class Game:
         self.weapons = WEAPONS
         self.monsters = MONSTERS
         
-        # Estado do jogo
         self.player_hp = 100
         self.max_hp = 100
         self.current_room = 0
@@ -145,7 +135,6 @@ class Game:
         self.game_over = False
         self.victory = False
         
-        # Estatísticas
         self.damage_history = []
         self.weapon_usage = defaultdict(list)
         self.critical_hits = 0
@@ -154,10 +143,8 @@ class Game:
         self.last_monster_damage = None
         self.last_weapon_used = None
         
-        # Flash de animação
         self.flash_timer = 0
         
-        # Inicia primeira dungeon
         self.start_room()
     
     def start_room(self):
@@ -171,7 +158,6 @@ class Game:
         if not self.current_monster or not self.current_monster.is_alive():
             return
         
-        # ESCOLHE ARMA ALEATORIAMENTE!
         weapon_idx = random.randint(0, len(self.weapons) - 1)
         weapon = self.weapons[weapon_idx]
         self.last_weapon_used = weapon
@@ -185,13 +171,11 @@ class Game:
         self.last_player_damage = (damage, is_critical)
         self.flash_timer = 15 if is_critical else 8
         
-        # Registra estatísticas
         self.damage_history.append(damage)
         self.weapon_usage[weapon_idx].append(damage)
         if is_critical:
             self.critical_hits += 1
         
-        # Verifica se monstro morreu
         if not self.current_monster.is_alive():
             self.current_room += 1
             self.last_monster_damage = None
@@ -201,7 +185,6 @@ class Game:
                 self.victory = True
             return
         
-        # Contra-ataque do monstro
         monster_damage, is_special = self.current_monster.attack()
         self.player_hp -= monster_damage
         self.last_monster_damage = (monster_damage, is_special)
@@ -224,7 +207,6 @@ class Game:
     
     def draw_game_panel(self):
         """Desenha painel do jogo (metade esquerda)"""
-        # Painel do jogador
         pygame.draw.rect(self.screen, COLOR_PANEL, (20, 20, GAME_WIDTH - 40, 160))
         pygame.draw.rect(self.screen, COLOR_WHITE, (20, 20, GAME_WIDTH - 40, 160), 2)
         
@@ -233,7 +215,6 @@ class Game:
         self.draw_hp_bar(40, 105, GAME_WIDTH - 80, 25, self.player_hp, self.max_hp, COLOR_GREEN)
         self.draw_text(f"Turno: {self.turn} | Ataques: {self.total_attacks}", 40, 140, COLOR_GRAY, self.font_small)
         
-        # Painel do monstro
         if self.current_monster:
             pygame.draw.rect(self.screen, COLOR_PANEL, (20, 200, GAME_WIDTH - 40, 140))
             pygame.draw.rect(self.screen, COLOR_WHITE, (20, 200, GAME_WIDTH - 40, 140), 2)
@@ -246,7 +227,6 @@ class Game:
             self.draw_hp_bar(40, 315, GAME_WIDTH - 80, 20, 
                            self.current_monster.current_hp, self.current_monster.max_hp, COLOR_RED)
         
-        # PAINEL DE EVENTO ALEATÓRIO (resultado do último ataque)
         pygame.draw.rect(self.screen, COLOR_PANEL, (20, 360, GAME_WIDTH - 40, 240))
         pygame.draw.rect(self.screen, COLOR_WHITE, (20, 360, GAME_WIDTH - 40, 240), 2)
         
@@ -255,12 +235,10 @@ class Game:
         if self.last_weapon_used and self.last_player_damage:
             damage, is_crit = self.last_player_damage
             
-            # Nome da arma escolhida aleatoriamente
             self.draw_text(f"Arma Sorteada:", 40, 420, COLOR_WHITE)
             self.draw_text(f"{self.last_weapon_used.name}", 40, 445, COLOR_BLUE, self.font_large)
             self.draw_text(f"({self.last_weapon_used.dice_notation})", 40, 480, COLOR_GRAY)
             
-            # Resultado do dado (GRANDE)
             result_color = COLOR_RED if is_crit and self.flash_timer % 4 < 2 else COLOR_GREEN
             self.draw_text("Dano:", 380, 420, COLOR_WHITE)
             self.draw_text(str(damage), 380, 450, result_color, self.font_huge)
@@ -273,7 +251,6 @@ class Game:
         else:
             self.draw_text("Clique para rolar os dados...", 180, 470, COLOR_GRAY, self.font_large)
         
-        # Dano do monstro
         if self.last_monster_damage:
             dmg, is_special = self.last_monster_damage
             special_text = " [SOPRO DE CAOS!]" if is_special else ""
@@ -281,7 +258,6 @@ class Game:
             self.draw_text(f"Monstro contra-atacou: -{dmg} HP{special_text}", 
                           40, 570, color, self.font_small)
         
-        # BOTÃO GIGANTE: ROLAR DADOS
         button_color = COLOR_GREEN if self.flash_timer == 0 else COLOR_ORANGE
         pygame.draw.rect(self.screen, button_color, (20, SCREEN_HEIGHT - 120, GAME_WIDTH - 40, 100))
         pygame.draw.rect(self.screen, COLOR_WHITE, (20, SCREEN_HEIGHT - 120, GAME_WIDTH - 40, 100), 4)
@@ -290,59 +266,79 @@ class Game:
     
     def create_stats_graph(self):
         """Cria gráficos estatísticos"""
-        fig = plt.figure(figsize=(7, 8), facecolor='#0f051e')
+        fig = plt.figure(figsize=(7, 8), facecolor='#0f051e', dpi=100)
         
         if self.total_attacks == 0:
             ax = fig.add_subplot(111)
             ax.text(0.5, 0.5, 'Aguardando primeiro ataque...', 
-                   ha='center', va='center', color='white', fontsize=16)
+                   ha='center', va='center', color='white', fontsize=20, fontweight='bold')
             ax.set_facecolor('#32194b')
             ax.axis('off')
         else:
-            # Gráfico 1: Distribuição (arma mais usada)
             most_used = max(self.weapon_usage.keys(), key=lambda k: len(self.weapon_usage[k]))
             weapon = self.weapons[most_used]
             damages = self.weapon_usage[most_used]
             
             ax1 = fig.add_subplot(3, 1, 1)
             ax1.set_facecolor('#32194b')
-            ax1.set_title(f'Distribuicao: {weapon.name} ({len(damages)} usos)', 
-                         color='gold', fontsize=12, fontweight='bold')
+            ax1.set_title(f'📊 Distribuição: {weapon.name} ({len(damages)} usos)', 
+                         color='#FFD700', fontsize=16, fontweight='bold', pad=15)
             
             bins = range(weapon.min_damage, weapon.max_damage + 2)
-            ax1.hist(damages, bins=bins, alpha=0.6, color='cyan', 
-                    edgecolor='white', label='Observado', density=True, linewidth=1.5)
+            ax1.hist(damages, bins=bins, alpha=0.7, color='#00FFFF', 
+                    edgecolor='white', label='Observado', density=True, linewidth=2)
             
             theo_probs = weapon.get_theoretical_distribution()
             theo_x = list(theo_probs.keys())
             theo_y = list(theo_probs.values())
-            ax1.plot(theo_x, theo_y, 'r-', linewidth=3, label='Teorico', marker='o', markersize=8)
+            ax1.plot(theo_x, theo_y, 'r-', linewidth=4, label='Teórico', 
+                    marker='o', markersize=10, markerfacecolor='yellow', markeredgecolor='red', markeredgewidth=2)
             
-            ax1.set_xlabel('Dano', color='white', fontsize=10)
-            ax1.set_ylabel('Probabilidade', color='white', fontsize=10)
-            ax1.tick_params(colors='white', labelsize=9)
-            ax1.legend(facecolor='#32194b', edgecolor='white', fontsize=10)
-            ax1.grid(True, alpha=0.3)
+            ax1.set_xlabel('Dano', color='white', fontsize=14, fontweight='bold')
+            ax1.set_ylabel('Probabilidade', color='white', fontsize=14, fontweight='bold')
+            ax1.tick_params(colors='white', labelsize=12, width=2, length=6)
+            ax1.legend(facecolor='#1a0d2e', edgecolor='#FFD700', fontsize=12, 
+                      framealpha=0.9, loc='best', fancybox=True, shadow=True,
+                      labelcolor='white')
+            ax1.grid(True, alpha=0.5, color='white', linestyle='--', linewidth=1)
+            ax1.spines['bottom'].set_color('white')
+            ax1.spines['top'].set_color('white')
+            ax1.spines['left'].set_color('white')
+            ax1.spines['right'].set_color('white')
+            ax1.spines['bottom'].set_linewidth(2)
+            ax1.spines['top'].set_linewidth(2)
+            ax1.spines['left'].set_linewidth(2)
+            ax1.spines['right'].set_linewidth(2)
             
-            # Gráfico 2: Histórico
             ax2 = fig.add_subplot(3, 1, 2)
             ax2.set_facecolor('#32194b')
-            ax2.set_title('Historico de Dano', color='gold', fontsize=12, fontweight='bold')
+            ax2.set_title('📈 Histórico de Dano', color='#FFD700', fontsize=16, fontweight='bold', pad=15)
             
             ax2.plot(range(1, len(self.damage_history) + 1), self.damage_history, 
-                    'g-', linewidth=1.5, marker='o', markersize=3, alpha=0.7)
-            ax2.axhline(y=np.mean(self.damage_history), color='cyan', linestyle='--', 
-                       linewidth=2, label=f'Media: {np.mean(self.damage_history):.2f}')
-            ax2.set_xlabel('Ataque #', color='white', fontsize=10)
-            ax2.set_ylabel('Dano', color='white', fontsize=10)
-            ax2.tick_params(colors='white', labelsize=9)
-            ax2.legend(facecolor='#32194b', edgecolor='white', fontsize=9)
-            ax2.grid(True, alpha=0.3)
+                    'g-', linewidth=2.5, marker='o', markersize=5, alpha=0.8, 
+                    markerfacecolor='lime', markeredgecolor='green', markeredgewidth=1)
+            mean_val = np.mean(self.damage_history)
+            ax2.axhline(y=mean_val, color='#00FFFF', linestyle='--', 
+                       linewidth=3, label=f'Média: {mean_val:.2f}', alpha=0.9)
+            ax2.set_xlabel('Ataque #', color='white', fontsize=14, fontweight='bold')
+            ax2.set_ylabel('Dano', color='white', fontsize=14, fontweight='bold')
+            ax2.tick_params(colors='white', labelsize=12, width=2, length=6)
+            ax2.legend(facecolor='#1a0d2e', edgecolor='#FFD700', fontsize=12, 
+                      framealpha=0.9, loc='best', fancybox=True, shadow=True,
+                      labelcolor='white')
+            ax2.grid(True, alpha=0.5, color='white', linestyle='--', linewidth=1)
+            ax2.spines['bottom'].set_color('white')
+            ax2.spines['top'].set_color('white')
+            ax2.spines['left'].set_color('white')
+            ax2.spines['right'].set_color('white')
+            ax2.spines['bottom'].set_linewidth(2)
+            ax2.spines['top'].set_linewidth(2)
+            ax2.spines['left'].set_linewidth(2)
+            ax2.spines['right'].set_linewidth(2)
             
-            # Gráfico 3: Comparação
             ax3 = fig.add_subplot(3, 1, 3)
             ax3.set_facecolor('#32194b')
-            ax3.set_title('Comparacao: Teorico vs Empirico', color='gold', fontsize=12, fontweight='bold')
+            ax3.set_title('⚔️ Comparação: Teórico vs Empírico', color='#FFD700', fontsize=16, fontweight='bold', pad=15)
             
             weapon_names = []
             theo_avgs = []
@@ -358,18 +354,37 @@ class Game:
                 x = np.arange(len(weapon_names))
                 width = 0.35
                 
-                ax3.bar(x - width/2, theo_avgs, width, label='Teorico', color='red', alpha=0.8)
-                ax3.bar(x + width/2, obs_avgs, width, label='Observado', color='cyan', alpha=0.8)
+                bars1 = ax3.bar(x - width/2, theo_avgs, width, label='Teórico', 
+                               color='#FF4444', alpha=0.9, edgecolor='white', linewidth=2)
+                bars2 = ax3.bar(x + width/2, obs_avgs, width, label='Observado', 
+                               color='#00FFFF', alpha=0.9, edgecolor='white', linewidth=2)
                 
-                ax3.set_xlabel('Arma', color='white', fontsize=10)
-                ax3.set_ylabel('Dano Medio', color='white', fontsize=10)
+                for bars in [bars1, bars2]:
+                    for bar in bars:
+                        height = bar.get_height()
+                        ax3.text(bar.get_x() + bar.get_width()/2., height,
+                                f'{height:.1f}', ha='center', va='bottom', 
+                                color='white', fontsize=10, fontweight='bold')
+                
+                ax3.set_xlabel('Arma', color='white', fontsize=14, fontweight='bold')
+                ax3.set_ylabel('Dano Médio', color='white', fontsize=14, fontweight='bold')
                 ax3.set_xticks(x)
-                ax3.set_xticklabels(weapon_names, rotation=0, ha='center', color='white', fontsize=9)
-                ax3.tick_params(colors='white', labelsize=9)
-                ax3.legend(facecolor='#32194b', edgecolor='white', fontsize=10)
-                ax3.grid(True, alpha=0.3, axis='y')
+                ax3.set_xticklabels(weapon_names, rotation=0, ha='center', color='white', fontsize=12, fontweight='bold')
+                ax3.tick_params(colors='white', labelsize=12, width=2, length=6)
+                ax3.legend(facecolor='#1a0d2e', edgecolor='#FFD700', fontsize=12, 
+                          framealpha=0.9, loc='best', fancybox=True, shadow=True,
+                          labelcolor='white')
+                ax3.grid(True, alpha=0.5, color='white', linestyle='--', linewidth=1, axis='y')
+                ax3.spines['bottom'].set_color('white')
+                ax3.spines['top'].set_color('white')
+                ax3.spines['left'].set_color('white')
+                ax3.spines['right'].set_color('white')
+                ax3.spines['bottom'].set_linewidth(2)
+                ax3.spines['top'].set_linewidth(2)
+                ax3.spines['left'].set_linewidth(2)
+                ax3.spines['right'].set_linewidth(2)
         
-        plt.tight_layout()
+        plt.tight_layout(pad=2.0)
         
         canvas = FigureCanvasAgg(fig)
         canvas.draw()
@@ -398,7 +413,6 @@ class Game:
             self.draw_text(f"Voce chegou ate a Sala {self.current_room + 1}/6", 
                          SCREEN_WIDTH // 2 - 200, 140, COLOR_WHITE, self.font_large)
         
-        # Painel de estatísticas gerais
         panel_y = 200
         pygame.draw.rect(self.screen, COLOR_PANEL, (50, panel_y, 600, 280))
         pygame.draw.rect(self.screen, COLOR_WHITE, (50, panel_y, 600, 280), 2)
@@ -428,7 +442,6 @@ class Game:
             
             self.draw_text(f"HP Final: {self.player_hp}/{self.max_hp}", 80, y, COLOR_WHITE)
         
-        # Painel de armas sorteadas
         panel2_y = 200
         panel2_x = 670
         pygame.draw.rect(self.screen, COLOR_PANEL, (panel2_x, panel2_y, 680, 280))
@@ -458,7 +471,6 @@ class Game:
                          panel2_x + 30, y + 20, diff_color, self.font_small)
             y += 50
         
-        # Gráfico final
         graph_surface = self.create_final_stats_graph()
         self.screen.blit(graph_surface, (50, 500))
         
@@ -467,12 +479,12 @@ class Game:
     
     def create_final_stats_graph(self):
         """Cria gráfico de estatísticas finais"""
-        fig = plt.figure(figsize=(13, 2.8), facecolor='#0f051e')
+        fig = plt.figure(figsize=(13, 3.2), facecolor='#0f051e', dpi=100)
         
         if self.total_attacks == 0:
             ax = fig.add_subplot(111)
             ax.text(0.5, 0.5, 'Nenhum ataque realizado', 
-                   ha='center', va='center', color='white', fontsize=14)
+                   ha='center', va='center', color='white', fontsize=18, fontweight='bold')
             ax.set_facecolor('#32194b')
             ax.axis('off')
         else:
@@ -482,28 +494,37 @@ class Game:
             
             ax1 = fig.add_subplot(1, 3, 1)
             ax1.set_facecolor('#32194b')
-            ax1.set_title(f'{weapon.name}\nTeorico vs Observado', 
-                         color='gold', fontsize=11, fontweight='bold')
+            ax1.set_title(f'📊 {weapon.name}\nTeórico vs Observado', 
+                         color='#FFD700', fontsize=14, fontweight='bold', pad=12)
             
             bins = range(weapon.min_damage, weapon.max_damage + 2)
-            ax1.hist(damages, bins=bins, alpha=0.6, color='cyan', 
-                    edgecolor='white', label='Observado', density=True, linewidth=1.5)
+            ax1.hist(damages, bins=bins, alpha=0.7, color='#00FFFF', 
+                    edgecolor='white', label='Observado', density=True, linewidth=2)
             
             theo_probs = weapon.get_theoretical_distribution()
             theo_x = list(theo_probs.keys())
             theo_y = list(theo_probs.values())
-            ax1.plot(theo_x, theo_y, 'r-', linewidth=3, label='Teorico', marker='o', markersize=6)
+            ax1.plot(theo_x, theo_y, 'r-', linewidth=4, label='Teórico', 
+                    marker='o', markersize=8, markerfacecolor='yellow', markeredgecolor='red', markeredgewidth=2)
             
-            ax1.set_xlabel('Dano', color='white', fontsize=9)
-            ax1.set_ylabel('Probabilidade', color='white', fontsize=9)
-            ax1.tick_params(colors='white', labelsize=8)
-            ax1.legend(facecolor='#32194b', edgecolor='white', fontsize=8)
-            ax1.grid(True, alpha=0.3)
+            ax1.set_xlabel('Dano', color='white', fontsize=12, fontweight='bold')
+            ax1.set_ylabel('Probabilidade', color='white', fontsize=12, fontweight='bold')
+            ax1.tick_params(colors='white', labelsize=11, width=2, length=5)
+            ax1.legend(facecolor='#1a0d2e', edgecolor='#FFD700', fontsize=11, 
+                      framealpha=0.9, loc='best', fancybox=True, shadow=True,
+                      labelcolor='white')
+            ax1.grid(True, alpha=0.5, color='white', linestyle='--', linewidth=1)
+            ax1.spines['bottom'].set_color('white')
+            ax1.spines['top'].set_color('white')
+            ax1.spines['left'].set_color('white')
+            ax1.spines['right'].set_color('white')
+            for spine in ax1.spines.values():
+                spine.set_linewidth(2)
             
             ax2 = fig.add_subplot(1, 3, 2)
             ax2.set_facecolor('#32194b')
-            ax2.set_title('Todas as Armas\nMedia: Teorico vs Empirico', 
-                         color='gold', fontsize=11, fontweight='bold')
+            ax2.set_title('⚔️ Todas as Armas\nMédia: Teórico vs Empírico', 
+                         color='#FFD700', fontsize=14, fontweight='bold', pad=12)
             
             weapon_names = []
             theo_avgs = []
@@ -518,42 +539,61 @@ class Game:
             x = np.arange(len(weapon_names))
             width = 0.35
             
-            ax2.bar(x - width/2, theo_avgs, width, label='Teorico', color='red', alpha=0.8)
-            ax2.bar(x + width/2, obs_avgs, width, label='Observado', color='cyan', alpha=0.8)
+            bars1 = ax2.bar(x - width/2, theo_avgs, width, label='Teórico', 
+                           color='#FF4444', alpha=0.9, edgecolor='white', linewidth=2)
+            bars2 = ax2.bar(x + width/2, obs_avgs, width, label='Observado', 
+                           color='#00FFFF', alpha=0.9, edgecolor='white', linewidth=2)
             
-            ax2.set_xlabel('Arma', color='white', fontsize=9)
-            ax2.set_ylabel('Dano Medio', color='white', fontsize=9)
+            for bars in [bars1, bars2]:
+                for bar in bars:
+                    height = bar.get_height()
+                    ax2.text(bar.get_x() + bar.get_width()/2., height,
+                            f'{height:.1f}', ha='center', va='bottom', 
+                            color='white', fontsize=9, fontweight='bold')
+            
+            ax2.set_xlabel('Arma', color='white', fontsize=12, fontweight='bold')
+            ax2.set_ylabel('Dano Médio', color='white', fontsize=12, fontweight='bold')
             ax2.set_xticks(x)
-            ax2.set_xticklabels(weapon_names, rotation=45, ha='right', color='white', fontsize=8)
-            ax2.tick_params(colors='white', labelsize=8)
-            ax2.legend(facecolor='#32194b', edgecolor='white', fontsize=8)
-            ax2.grid(True, alpha=0.3, axis='y')
+            ax2.set_xticklabels(weapon_names, rotation=45, ha='right', color='white', fontsize=11, fontweight='bold')
+            ax2.tick_params(colors='white', labelsize=11, width=2, length=5)
+            ax2.legend(facecolor='#1a0d2e', edgecolor='#FFD700', fontsize=11, 
+                      framealpha=0.9, loc='best', fancybox=True, shadow=True,
+                      labelcolor='white')
+            ax2.grid(True, alpha=0.5, color='white', linestyle='--', linewidth=1, axis='y')
+            for spine in ax2.spines.values():
+                spine.set_color('white')
+                spine.set_linewidth(2)
             
             ax3 = fig.add_subplot(1, 3, 3)
             ax3.set_facecolor('#32194b')
-            ax3.set_title('Convergencia da Media\n(Lei dos Grandes Numeros)', 
-                         color='gold', fontsize=11, fontweight='bold')
+            ax3.set_title('📈 Convergência da Média\n(Lei dos Grandes Números)', 
+                         color='#FFD700', fontsize=14, fontweight='bold', pad=12)
             
             cumulative_avg = []
             for i in range(1, len(self.damage_history) + 1):
                 cumulative_avg.append(np.mean(self.damage_history[:i]))
             
             ax3.plot(range(1, len(cumulative_avg) + 1), cumulative_avg, 
-                    'g-', linewidth=2, label='Media Acumulada')
+                    'g-', linewidth=3, label='Média Acumulada', marker='o', markersize=4, alpha=0.8)
             
             total_theo = sum(self.weapons[idx].avg_damage * len(dmgs) 
                            for idx, dmgs in self.weapon_usage.items())
             expected_avg = total_theo / self.total_attacks
-            ax3.axhline(y=expected_avg, color='red', linestyle='--', 
-                       linewidth=2, label=f'Esperado: {expected_avg:.2f}')
+            ax3.axhline(y=expected_avg, color='#FF4444', linestyle='--', 
+                       linewidth=3, label=f'Esperado: {expected_avg:.2f}', alpha=0.9)
             
-            ax3.set_xlabel('Numero de Ataques', color='white', fontsize=9)
-            ax3.set_ylabel('Dano Medio', color='white', fontsize=9)
-            ax3.tick_params(colors='white', labelsize=8)
-            ax3.legend(facecolor='#32194b', edgecolor='white', fontsize=8)
-            ax3.grid(True, alpha=0.3)
+            ax3.set_xlabel('Número de Ataques', color='white', fontsize=12, fontweight='bold')
+            ax3.set_ylabel('Dano Médio', color='white', fontsize=12, fontweight='bold')
+            ax3.tick_params(colors='white', labelsize=11, width=2, length=5)
+            ax3.legend(facecolor='#1a0d2e', edgecolor='#FFD700', fontsize=11, 
+                      framealpha=0.9, loc='best', fancybox=True, shadow=True,
+                      labelcolor='white')
+            ax3.grid(True, alpha=0.5, color='white', linestyle='--', linewidth=1)
+            for spine in ax3.spines.values():
+                spine.set_color('white')
+                spine.set_linewidth(2)
         
-        plt.tight_layout()
+        plt.tight_layout(pad=2.5)
         
         canvas = FigureCanvasAgg(fig)
         canvas.draw()
@@ -581,7 +621,6 @@ class Game:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
                 
-                # Clique no botão ROLAR DADOS
                 if (20 <= mouse_x <= GAME_WIDTH - 20 and 
                     SCREEN_HEIGHT - 120 <= mouse_y <= SCREEN_HEIGHT - 20):
                     if self.current_monster and self.current_monster.is_alive():

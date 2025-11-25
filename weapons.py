@@ -1,8 +1,3 @@
-"""
-Sistema de Armas - Fate's Gambit
-Define as armas disponíveis e suas características estatísticas
-"""
-
 import random
 import numpy as np
 
@@ -16,14 +11,12 @@ class Weapon:
         self.num_dice = num_dice
         self.sides = sides
         
-        # Calcula estatísticas teóricas
         self.min_damage = num_dice
         self.max_damage = num_dice * sides
         self.avg_damage = num_dice * (sides + 1) / 2
         self.variance = num_dice * (sides ** 2 - 1) / 12
         self.std_dev = np.sqrt(self.variance)
         
-        # Probabilidade de crítico (tirar máximo)
         if num_dice == 1:
             self.critical_prob = 1.0 / sides
         else:
@@ -38,18 +31,14 @@ class Weapon:
     def get_theoretical_distribution(self):
         """Retorna a distribuição teórica de probabilidades"""
         if self.num_dice == 1:
-            # Distribuição uniforme
             probs = {i: 1.0 / self.sides for i in range(self.min_damage, self.max_damage + 1)}
         else:
-            # Aproximação usando distribuição normal
             probs = {}
             for val in range(self.min_damage, self.max_damage + 1):
-                # Probabilidade usando PDF da normal
                 z = (val - self.avg_damage) / self.std_dev
                 prob = np.exp(-0.5 * z ** 2) / (self.std_dev * np.sqrt(2 * np.pi))
                 probs[val] = prob
             
-            # Normalizar
             total = sum(probs.values())
             probs = {k: v / total for k, v in probs.items()}
         
@@ -71,7 +60,6 @@ class Weapon:
         return f"{self.name} ({self.dice_notation}) - Avg: {self.avg_damage:.1f}"
 
 
-# ==================== ARSENAL DE ARMAS ====================
 
 WEAPONS = [
     Weapon(
@@ -149,13 +137,12 @@ def compare_weapons():
 
 
 if __name__ == "__main__":
-    # Teste do módulo
     print("🗡️  TESTANDO MÓDULO DE ARMAS\n")
     
     compare_weapons()
     
     print("\n📊 TESTANDO ROLAGEM:")
-    weapon = WEAPONS[1]  # Espada Comum
+    weapon = WEAPONS[1]
     print(f"\nArma: {weapon}")
     print("\n10 rolagens:")
     for i in range(10):

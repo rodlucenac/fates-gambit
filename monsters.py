@@ -1,8 +1,3 @@
-"""
-Sistema de Monstros - Fate's Gambit
-Define os monstros e suas características de combate
-"""
-
 import random
 
 
@@ -19,12 +14,10 @@ class Monster:
         self.is_boss = is_boss
         self.description = description
         
-        # Calcula dano médio do monstro
         self.avg_damage = num_dice * (sides + 1) / 2
         self.min_damage = num_dice
         self.max_damage = num_dice * sides
         
-        # Contador de turnos (para habilidades especiais)
         self.turn_count = 0
     
     def reset(self):
@@ -47,17 +40,14 @@ class Monster:
         """Monstro ataca e retorna dano"""
         self.turn_count += 1
         
-        # Chefe usa ataque especial a cada 3 turnos
         if self.is_boss and self.turn_count % 3 == 0:
             return self.special_attack()
         
-        # Ataque normal
         damage = sum(random.randint(1, self.sides) for _ in range(self.num_dice))
         return damage, False
     
     def special_attack(self):
         """Ataque especial do chefe (Sopro de Caos)"""
-        # 5d4 de dano
         damage = sum(random.randint(1, 4) for _ in range(5))
         return damage, True  # True indica ataque especial
     
@@ -84,7 +74,6 @@ class Monster:
         return f"{self.name}{boss_text} - {status}"
 
 
-# ==================== BESTIÁRIO ====================
 
 MONSTERS = [
     Monster(
@@ -176,19 +165,16 @@ def monster_info_table():
 
 
 if __name__ == "__main__":
-    # Teste do módulo
     print("👹 TESTANDO MÓDULO DE MONSTROS\n")
     
     monster_info_table()
     
     print("\n⚔️  SIMULANDO COMBATE:\n")
     
-    # Pega primeiro monstro
     monster = get_monster(0)
     print(f"Lutando contra: {monster.name}")
     print(f"HP inicial: {monster.current_hp}/{monster.max_hp}\n")
     
-    # Simula alguns ataques
     print("Jogador ataca:")
     for i in range(3):
         dano = random.randint(3, 8)
